@@ -1,16 +1,25 @@
 <!DOCTYPE html>
 <html>
   <body>
-    <form action="http://plant-picture-storage.storage.googleapis.com" method="post" enctype="multipart/form-data">
-      <input type="text" name="key" value="">
-      <input type="hidden" name="bucket" value="plant-picture-storage">
-      <input type="hidden" name="Content-Type" value="image/jpeg">
+    <form action="http://plant-picture-storage.storage.googleapis.com"
+    method="post" enctype="multipart/form-data" id="form">
+      <input type="hidden" name="key" value="" id="key">
       <input type="hidden" name="GoogleAccessId" value="picture@plant-ml.iam.gserviceaccount.com">
-      <input type="hidden" name="acl" value="bucket-owner-read">
-      <input type="hidden" name="policy" value="eyJleHBpcmF0aW9uIjogIjIwMjAtMDYtMTZUMTE6MTE6MTFaIiwKICJjb25kaXRpb25zIjogWwogIFsic3RhcnRzLXdpdGgiLCAiJGtleSIsICIiIF0sCiAgeyJhY2wiOiAiYnVja2V0LW93bmVyLXJlYWQiIH0sCiAgeyJidWNrZXQiOiAicGxhbnQtcGljdHVyZS1zdG9yYWdlIn0sCiAgWyJlcSIsICIkQ29udGVudC1UeXBlIiwgImltYWdlL2pwZWciIF0sCiAgWyJjb250ZW50LWxlbmd0aC1yYW5nZSIsIDAsIDEwMDAwMDBdCiAgXQp9Cg==">
-      <input type="hidden" name="signature" value="UkJC4pYksBdEBPZslqgwAGqPEUuMczC+I4t/KIF4aDhRtgXOjCnx8wT0vxDW3Bq9YdIZB1jlY0uvkLrqMqqGZs08yGvuol0lnUK7PuOBRRn1n81kmP2AvIjWMGN2CaFlmCOtBi/mi2ihSJDinSDFZARJpXOU45NwfYdrcQkg4P0raD5CVenzblvEyt9LSliqlto2mE7PHrXp2WzX8CgWeJrdTBs610R8BHFWX3mp906KtKwzXyWnw/566eJn00eMZEqM/okj0YyFBYaeRivTcvqp4y2g77NBcT4X4bFWBbjEMJTGdna/RL6Py3rwaYM7H7yMEeyYxEjfRzzyX+eMUQ==">
+      <input type="hidden" name="policy" value="ewogICJleHBpcmF0aW9uIjogIjIwMjAtMDEtMDFUMDA6MDA6MDBaIiwKICAiY29uZGl0aW9ucyI6IFsKICAgIHsiYnVja2V0IjogInBsYW50LXBpY3R1cmUtc3RvcmFnZSJ9LAogICAgWyJzdGFydHMtd2l0aCIsICIka2V5IiwgIiIgXSwKICAgIFsic3RhcnRzLXdpdGgiLCAiJHN1Y2Nlc3NfYWN0aW9uX3N0YXR1cyIsICIiXQogIF0KfQo=">
+      <input type="hidden" name="signature" value="eqQfzZwEr1JZNrD2VxFGkT03nWa9tGRKZvWdVRu8lNCEoXmAr6rpOueXlE1MVJtSMhw6y4A8MPHWdhBOeLg5ZFlgHQARNtkoOuEOVpjJyulLMAiPhfBkxU8VxImOSV0jxN2xsyHq1e1ZP26xXLfrlAQX4vMbM4d4MqTaJ57ndoLI3yun+WeG6itN91ZraF79gyA60Tkv9kcYWc4YXeRKbQxdRbrC1nTgoxME9kTj78q3Gfn8GIYsAwz3L5YHsn9WCOwaQ7yJK3/ASHx1hQYTPFFb64NNdiwHtrKpuB75UFY1FgiCWFrwFTShBZx162+8YauZYKsMQWm4xBvLZykzVQ==">
+      <input type="hidden" name="success_action_status" value="201">
       <input name="file" type="file">
       <input type="submit" value="Upload">
     </form>
+    <script>
+      window.onload = function() {
+        var form = document.getElementById('form');
+        var key = document.getElementById('key');
+        form.addEventListener("submit", function() {
+          var iso = new Date().toISOString();
+          key.value = iso;
+        });
+      }
+    </script>
   </body>
 </html>
