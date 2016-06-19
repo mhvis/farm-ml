@@ -38,29 +38,30 @@ def get_filename():
 
 @post('/label/<imageset>')
 def label(imageset):
-    upload = request.files.get('media')
-    name, ext = os.path.splitext(upload.filename)
-    if ext.lower() not in ('.png','.jpg','.jpeg'):
-        return 'File extension not allowed.'
-    modeldir = models + '/' + imageset
-    imagepath = modeldir + '/labeled/' + get_filename() + ext.lower()
-    upload.save(imagepath)
-    output = subprocess.check_output(
-            [
-                cmd_label,
-                '--graph=' + modeldir + '/graph.pb',
-                '--labels=' + modeldir + '/labels.txt',
-                '--output_layer=final_result',
-                '--image=' + imagepath
-            ],
-            stderr=subprocess.STDOUT).decode('utf-8')
-    print(output)
-    # Change below to be more general, accepting all categories
-    if output.find(' accept ') < output.find(' reject' ):
-        category = 'accept'
-    else:
-        category = 'reject'
-    return category
+    dir_model = models + '/' + imageset
+    uploads = request.files.getall('media')
+    body = ''
+    for upload in uploads:
+        name, ext = os.path.splitext(upload.filename)
+        if ext.lower() not in ('.png','.jpg','.jpeg'):
+            return 'File extension not allowed.'
+        imagepath = dir_model + '/labeled/' + get_filename() + ext.lower()
+        upload.save(imagepath)
+        output = subprocess.check_output(
+                [
+                    cmd_label,
+                    '--graph=' + dir_model + '/graph.pb',
+                    '--labels=' + dir_model + '/labels.txt',
+                    '--output_layer=final_result',
+                    '--image=' + imagepath
+                ],
+                stderr=subprocess.STDOUT).decode('utf-8')
+        # Change below to be more general, accepting all categories
+        if output.find(' accept ') < output.find(' reject' ):
+            body += 'accept\n'
+        else:
+            body += 'reject\n'
+    return body
 
 # Adding
 
@@ -98,16 +99,21 @@ def get_imagesets():
 
 @get('/browse/<imageset>')
 def get_imageset(imageset):
-    categories = os.listdir(images + '/' + imageset)
+    dir_img = images + '/' + imageset
+    categories = os.listdir(dir_img)
+    category_img = [sorted(os.listdir(dir_img + '/' + c)) for c in categories]
+    cnt = sum([len(x) for x in category_img])
     htmlimg = '<img src="/static/' + imageset + '/{}" width="100" height="100">\n'
-    body = '<h1>Imageset \'' + imageset + '\'</h1>\n'
-    body += form_template.format('/label/' + imageset, 'Label image: ')
-    for category in categories:
-        files = sorted(os.listdir(images + '/' + imageset + '/' + category))
-        add = '/add/' + imageset + '/' + category
-        body += '<h2>Category \'' + category + '\'</h2>\n'
+    body = '<h1>Imageset \'{}\' ({})</h1>\n'.format(imageset, cnt)
+    body += form_multiple_template.format('/label/' + imageset, 'Label image: ')
+    for i in range(0, len(categories)):
+        cat = categories[i]
+        cat_img = category_img[i]
+        cat_cnt = len(cat_img)
+        add = '/add/' + imageset + '/' + cat
+        body += '<h2>Category \'{}\' ({})</h2>\n'.format(cat, cat_cnt)
         body += form_multiple_template.format(add, 'Add images: ')
-        body += ''.join([htmlimg.format(category + '/' + f) for f in files])
+        body += ''.join([htmlimg.format(cat + '/' + f) for f in cat_img])
     return template.format(body)
 
 # Retraining
