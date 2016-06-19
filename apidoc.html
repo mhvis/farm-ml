@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+	<body>
+		<h1>Browse imagesets</h1>
+		<p><a href="/browse">/browse</a></p>
+		<h1>API doc</h1>
+		<h2>Label image to find out category</h2>
+		<p>POST image with key 'media' to /label/{imageset}</p>
+		<p>Response will be 'accept' or 'reject'</p>
+		<h2>Add image with known category</h2>
+		<p>POST image with key 'media' to /add/{imageset}/{accept/reject}</p>
+		<h2>Retrain</h2>
+		<p>GET /retrain/{imageset}</p>
+		<h2>View retrain logs</h2>
+		<p><a href="/retrainlogs">/retrainlogs</a></p>
+	</body>
+</html>
