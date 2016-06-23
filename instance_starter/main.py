@@ -47,15 +47,14 @@ def is_running():
     logging.info('Retrieved running state: %s', running)
     return running
 
-def is_accessible():
-    if is_running():
-        address = 'http://' + get_ip()
-        try:
-            urllib2.urlopen(address)
-            logging.info('Instance is accessible at %s', address)
-            return True
-        except Exception as e:
-            logging.info('Instance is not accessible: %s', e)
+def is_accessible(ip):
+    address = 'http://' + ip
+    try:
+        urllib2.urlopen(address)
+        logging.info('Instance is accessible at %s', address)
+        return True
+    except Exception as e:
+        logging.info('Instance is not accessible: %s', e)
     return False
 
 def get_ip():
@@ -80,20 +79,22 @@ def stop_after_timeout():
     timer = threading.Timer(timeout, stop)
     timer.daemon = True
     timer.start()
-    logging.info('Scheduled stop after timeout')
+
 
 class MainPage(webapp2.RequestHandler):
     def get(self):
         logging.info('Incoming request')
-        if is_accessible():
-            address = 'http://' + get_ip() + '/'
-            logging.info('Redirecting to %s', address)
-            self.redirect(address)
+        ip = get_ip()
+        if is_accessible(ip):
             stop_after_timeout()
+            self.redirect('http://' + ip)
             return
-        self.response.write(html_template.format(html_starting))
-        start()
+        thread = threading.Thread(target=start)
+        thread.daemon = True
+        thread.start()
         stop_after_timeout()
+        self.response.write(html_template.format(html_starting))
+
 
 app = webapp2.WSGIApplication([
     ('/', MainPage),
