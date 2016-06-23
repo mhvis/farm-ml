@@ -36,8 +36,24 @@ instance = {
         'zone': 'europe-west1-c',
         'instance': 'large'
         }
-timeout = 1800.0
-timer = None
+
+
+def stop_timeout():
+    while True:
+        logging.info('Stop timer waiting to start')
+        stop_timer.wait()
+        stop_timer.clear()
+        logging.info('Stop timer started')
+        while stop_timer.wait(1800.0):
+            logging.info('Stop timer reset')
+            stop_timer.clear()
+        logging.info('Stop timer finished, stopping instance')
+        stop()
+
+stop_timer = threading.Event()
+stop_thread = threading.Thread(target=stop_timeout)
+stop_thread.daemon = True
+stop_thread.start()
 
 credentials = GoogleCredentials.get_application_default()
 instances = build('compute', 'v1', credentials=credentials).instances()
@@ -48,13 +64,13 @@ def is_running():
     return running
 
 def is_accessible(ip):
-    address = 'http://' + ip
-    try:
-        urllib2.urlopen(address)
-        logging.info('Instance is accessible at %s', address)
-        return True
-    except Exception as e:
-        logging.info('Instance is not accessible: %s', e)
+    if is_running():
+        try:
+            urllib2.urlopen('http://' + ip)
+            logging.info('Instance is accessible')
+            return True
+        except Exception as e:
+            logging.info('Instance is not accessible: %s', e)
     return False
 
 def get_ip():
@@ -72,14 +88,8 @@ def stop():
     instances.stop(**instance).execute()
 
 def stop_after_timeout():
-    logging.info('Scheduling stop after timeout')
-    global timer
-    if timer is not None and timer.is_alive():
-        timer.cancel()
-    timer = threading.Timer(timeout, stop)
-    timer.daemon = True
-    timer.start()
-
+    logging.info('Setting stop timer')
+    stop_timer.set()
 
 class MainPage(webapp2.RequestHandler):
     def get(self):
@@ -88,13 +98,10 @@ class MainPage(webapp2.RequestHandler):
         if is_accessible(ip):
             stop_after_timeout()
             self.redirect('http://' + ip)
-            return
-        thread = threading.Thread(target=start)
-        thread.daemon = True
-        thread.start()
-        stop_after_timeout()
-        self.response.write(html_template.format(html_starting))
-
+        else:
+            start()
+            stop_after_timeout()
+            self.response.write(html_template.format(html_starting))
 
 app = webapp2.WSGIApplication([
     ('/', MainPage),
