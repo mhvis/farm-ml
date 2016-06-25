@@ -4,6 +4,7 @@
 import time
 import os
 import subprocess
+import threading
 from bottle import run, get, post, request, response, static_file
 
 count = 1
@@ -28,7 +29,29 @@ form_multiple_template = '''<form action="{}" method="post" enctype="multipart/f
     {}<input type="file" name="media" multiple><input type="submit" value="Upload">
 </form>'''
 
+# Shutdown timer
+
+def shutdown():
+    print('Shutting down in a minute')
+    time.sleep(60)
+    print('Shutting down')
+    subprocess.call(['sudo', '/sbin/shutdown', '-h', 'now'])
+
+def reset_shutdown():
+    global timer
+    print('Resetting shutdown timer')
+    if timer is not None and timer.is_alive():
+        print('Cancelling running shutdown timer')
+        timer.cancel()
+    timer = threading.Timer(900.0, shutdown)
+    timer.daemon = True
+    timer.start()
+
+timer = None
+reset_shutdown()
+
 def get_filename():
+    '''Creates a new unique filename for a next file.'''
     global count
     name = time.strftime('%Y-%m-%d-%H-%M-%S') + '-' + str(count).zfill(4)
     count += 1
@@ -91,6 +114,7 @@ def index():
 
 @get('/browse')
 def get_imagesets():
+    reset_shutdown()
     imagesets = os.listdir(images)
     htmla = '<p><a href="/browse/{0}">/browse/{0}</a></p>\n'
     body = '<h1>Imagesets</h1>\n'
@@ -99,13 +123,14 @@ def get_imagesets():
 
 @get('/browse/<imageset>')
 def get_imageset(imageset):
+    reset_shutdown()
     dir_img = images + '/' + imageset
     categories = os.listdir(dir_img)
     category_img = [sorted(os.listdir(dir_img + '/' + c)) for c in categories]
     cnt = sum([len(x) for x in category_img])
     htmlimg = '<img src="/static/' + imageset + '/{}" width="100" height="100">\n'
     body = '<h1>Imageset \'{}\' ({})</h1>\n'.format(imageset, cnt)
-    body += form_multiple_template.format('/label/' + imageset, 'Label image: ')
+    body += form_multiple_template.format('/label/' + imageset, 'Label images: ')
     for i in range(0, len(categories)):
         cat = categories[i]
         cat_img = category_img[i]
@@ -139,6 +164,7 @@ def retrain(imageset):
 
 @get('/retrainlogs')
 def retrainlogs():
+    reset_shutdown()
     logs = sorted(os.listdir(root + '/retrainlogs'), reverse=True)
     htmla = '<p><a href="/retrainlog/{0}">/retrainlog/{0}</a></p>\n'
     body = '<h1>Retrain logs</h1>\n'
@@ -147,7 +173,7 @@ def retrainlogs():
 
 @get('/retrainlog/<log>')
 def retrainlog(log):
-    #response.headers['Content-Type'] = 'text/plain; charset=UTF-8'
+    #response.headers['Content-Type'] = 'text/plain'
     return static_file(log, root=root + '/retrainlogs')
 
 if __name__ == '__main__':
